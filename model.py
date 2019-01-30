@@ -10,11 +10,12 @@ from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Dropout, Flatten, Lambda, Activation, MaxPooling2D, Reshape, Input, concatenate
 from keras.optimizers import Adam
+from keras.models import load_model
 
 IMAGE_HEIGHT = 320
 IMAGE_WIDTH = 160
 IMAGE_CHANNEL = 3
-BATCH_SIZE  = 142
+BATCH_SIZE  = 112
 NUM_CLASSES =4
 EPOCHS = 2
 def get_files(filename):
@@ -41,7 +42,7 @@ def get_files(filename):
 
     return class_train,label_train
 
-filename = "sim_imgs/sim_imgs/"
+filename = "sim_imgs/"
 
 image_list,y_labe = get_files(filename)
 
@@ -70,6 +71,13 @@ image = cv2.imread(image_list[index])
 test_img = random_brightness(image)
 plt.imshow(test_img)
 plt.show()
+#model test
+pre_img =cv2.resize(image, (160, 320), interpolation=cv2.INTER_AREA)
+model = load_model("model.h5")
+
+pre_result = model.predict_classes(np.asarray([pre_img]))
+predict_path = image_list[index]
+print ("perdict:", predict_path,pre_result )
 
 # loads image
 def get_image(index, data, labels):
@@ -88,7 +96,7 @@ def generator(data, labels, has_augment = False):
         for batch in range(0, len(data), BATCH_SIZE):
             # slice out the current batch according to batch-size
             current_batch = data[batch:(batch + BATCH_SIZE)]
-            print(current_batch)
+            #print(current_batch)
             # initializing the arrays, x_train and y_train
             x_train = np.empty(
                 [0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL], dtype=np.float32)
@@ -118,8 +126,10 @@ def get_model():
     model.add(Conv2D(64, 3, 3, activation='relu'))
     model.add(MaxPooling2D())
     model.add(Flatten())
+    model.add(Dropout(.5))
     model.add(Dense(100))
     model.add(Dense(50))
+    model.add(Dropout(.75))
     model.add(Dense(10))
     model.add(Dense(4))
     #model.summary()
